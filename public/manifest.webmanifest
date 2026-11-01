@@ -1,0 +1,54 @@
+{
+  "name": "KarMusic — Free music player with landscape lyrics",
+  "short_name": "KarMusic",
+  "description": "A free, local-first music player with a royalty-free online catalog, local audio imports and fullscreen landscape lyrics.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "orientation": "any",
+  "background_color": "#08090a",
+  "theme_color": "#08090a",
+  "categories": ["music", "entertainment", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Explore online music",
+      "short_name": "Explore",
+      "url": "/explore",
+      "description": "Browse royalty-free music categories"
+    },
+    {
+      "name": "Search everything",
+      "short_name": "Search",
+      "url": "/search",
+      "description": "Search your library and the online catalog"
+    },
+    {
+      "name": "Now playing",
+      "short_name": "Player",
+      "url": "/now-playing",
+      "description": "Open the full player and lyrics"
+    }
+  ]
+}

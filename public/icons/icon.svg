@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="KarMusic">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="60%">
+      <stop offset="0" stop-color="#14170f"/>
+      <stop offset="1" stop-color="#08090a"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+  <circle cx="256" cy="256" r="159" fill="#c8ff4d"/>
+  <g stroke="#08090a" stroke-width="54" stroke-linecap="round">
+    <path d="M207 159v194"/>
+    <path d="M207 256l112-97"/>
+    <path d="M207 256l112 97"/>
+  </g>
+</svg>
