@@ -4,6 +4,8 @@ KarMusic is a mobile-first web music player for royalty-free online tracks and t
 
 KarMusic has no account system, no analytics and no built-in copyrighted catalog. Local files are stored in the browser and are never uploaded.
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkieixch%2Fkarmusic)
+
 ## Features
 
 ### Music sources
