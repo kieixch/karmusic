@@ -39,6 +39,9 @@ export function AlbumArt({
     [id],
   );
   const initial = (title.trim()[0] ?? "?").toUpperCase();
+  const hasCustomPosition = className
+    ? className.split(/\s+/).some((token) => ["absolute", "fixed", "sticky"].includes(token))
+    : false;
 
   useEffect(() => {
     setFailed(false);
@@ -48,7 +51,8 @@ export function AlbumArt({
     <div
       aria-hidden="true"
       className={cn(
-        "relative shrink-0 overflow-hidden bg-gradient-to-br",
+        "shrink-0 overflow-hidden bg-gradient-to-br",
+        !hasCustomPosition && "relative",
         gradient,
         rounded,
         className,

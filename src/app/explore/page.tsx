@@ -81,12 +81,12 @@ export default function ExplorePage() {
                     rounded="rounded-none"
                     iconSize="size-8"
                   />
-                  <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10" aria-hidden />
-                  <span className="relative">
-                    <span className="block text-[10px] font-semibold uppercase tracking-wider text-accent/80">
+                  <span className="absolute inset-0 z-10 bg-gradient-to-t from-black/95 via-black/60 to-black/15" aria-hidden />
+                  <span className="relative z-20 max-w-full drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                    <span className="block text-[10px] font-semibold uppercase tracking-wider text-accent">
                       {category.type}
                     </span>
-                    <span className="mt-0.5 block text-sm font-semibold text-white">{category.name}</span>
+                    <span className="mt-0.5 block truncate text-sm font-semibold text-white">{category.name}</span>
                   </span>
                 </button>
               );
