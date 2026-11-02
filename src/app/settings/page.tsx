@@ -94,6 +94,12 @@ export default function SettingsPage() {
           ))}
         </div>
         <SwitchRow
+          label="Ambient mode"
+          description="Turn the full player into a moving, blurred backdrop based on the current artwork."
+          checked={settings.ambientMode}
+          onChange={(checked) => updateSettings({ ambientMode: checked })}
+        />
+        <SwitchRow
           label="Reduce motion"
           description="Disable smooth scrolling, spinners and animated transitions where possible."
           checked={settings.reduceMotion}

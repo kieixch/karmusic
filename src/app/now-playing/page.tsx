@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink, Heart, ListMusic, Maximize2, Music2, Trash2, X } from "lucide-react";
+import { ExternalLink, Heart, ListMusic, Maximize2, Music2, Sparkles, Trash2, X } from "lucide-react";
 import { AlbumArt } from "@/components/ui/AlbumArt";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -76,6 +76,13 @@ export default function NowPlayingPage() {
           <h1 className="mt-1 text-xl font-bold tracking-tight text-white sm:text-2xl">Full player</h1>
         </div>
         <div className="flex items-center gap-1">
+          <IconButton
+            label={settings.ambientMode ? "Disable ambient mode" : "Enable ambient mode"}
+            active={settings.ambientMode}
+            onClick={() => updateSettings({ ambientMode: !settings.ambientMode })}
+          >
+            <Sparkles aria-hidden />
+          </IconButton>
           <IconButton
             label={favorite ? "Remove from favorites" : "Add to favorites"}
             active={favorite}

@@ -11,6 +11,7 @@ export interface UserSettings {
   reduceMotion: boolean;
   defaultVolume: number;
   playbackRate: number;
+  ambientMode: boolean;
 }
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -23,6 +24,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   reduceMotion: false,
   defaultVolume: 0.85,
   playbackRate: 1,
+  ambientMode: true,
 };
 
 export function sanitizeSettings(input: unknown): UserSettings {
@@ -48,5 +50,9 @@ export function sanitizeSettings(input: unknown): UserSettings {
     playbackRate: [0.75, 1, 1.25, 1.5, 2].includes(value.playbackRate as number)
       ? (value.playbackRate as number)
       : 1,
+    ambientMode:
+      typeof value.ambientMode === "boolean"
+        ? value.ambientMode
+        : DEFAULT_SETTINGS.ambientMode,
   };
 }
