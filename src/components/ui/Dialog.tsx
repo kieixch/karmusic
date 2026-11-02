@@ -19,6 +19,11 @@ interface DialogProps {
 export function Dialog({ open, onClose, title, description, children, footer, size = "md" }: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -26,22 +31,22 @@ export function Dialog({ open, onClose, title, description, children, footer, si
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.stopPropagation();
-        onClose();
+        onCloseRef.current();
       }
     };
     document.addEventListener("keydown", onKey);
     const timer = window.setTimeout(() => {
-      const focusable = panelRef.current?.querySelector<HTMLElement>(
-        "input, textarea, select, button:not([aria-label='Close dialog'])",
+      const field = panelRef.current?.querySelector<HTMLElement>(
+        "input:not([type='hidden']), textarea, select",
       );
-      focusable?.focus();
+      field?.focus();
     }, 40);
     return () => {
       document.removeEventListener("keydown", onKey);
       window.clearTimeout(timer);
       previousFocus.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open || typeof document === "undefined") return null;
 

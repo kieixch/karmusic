@@ -121,7 +121,10 @@ test("creates a playlist, mixes sources, reorders and persists the order", async
 
   await page.getByRole("button", { name: "New playlist" }).click();
   const createDialog = page.getByRole("dialog", { name: "New playlist" });
-  await createDialog.getByLabel("Playlist name").fill("Road test");
+  const nameInput = createDialog.getByLabel("Playlist name");
+  await nameInput.pressSequentially("Road test");
+  await expect(nameInput).toBeFocused();
+  await expect(nameInput).toHaveValue("Road test");
   await createDialog.getByRole("button", { name: "Create playlist" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Created" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Road test/ })).toBeVisible();
