@@ -34,8 +34,7 @@ export function LyricsPanel({
   const [following, setFollowing] = useState(true);
   const [userBrowsing, setUserBrowsing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const scrollFrame = useRef(0);
-  const programmatic = useRef(false);
+  const contentRef = useRef<HTMLDivElement>(null);
   const doesMatchCurrent = currentTrack?.id === track.id;
   const time = doesMatchCurrent ? currentTime : 0;
   const lyrics = useLyrics(track.id, time);
@@ -58,10 +57,25 @@ export function LyricsPanel({
     setUserBrowsing(false);
   }, [track.id]);
 
+  const commitContentTransform = useCallback(() => {
+    const container = scrollRef.current;
+    const content = contentRef.current;
+    if (!container || !content) return;
+    const transform = getComputedStyle(content).transform;
+    const offset = transform && transform !== "none" ? new DOMMatrixReadOnly(transform).m42 : 0;
+    content.style.transition = "none";
+    content.style.transform = "";
+    content.style.willChange = "";
+    if (Math.abs(offset) >= 0.5) {
+      container.scrollTop = Math.max(0, container.scrollTop - offset);
+    }
+  }, []);
+
   useEffect(() => {
     if (!autoScroll || !following || !activeScrollGroup) return;
     const container = scrollRef.current;
-    if (!container) return;
+    const content = contentRef.current;
+    if (!container || !content) return;
     const firstLine = container.querySelector<HTMLElement>(
       `[data-line-index="${activeScrollGroup.start}"]`,
     );
@@ -71,39 +85,47 @@ export function LyricsPanel({
         `[data-line-index="${activeScrollGroup.end}"]`,
       ) ?? firstLine;
 
-    cancelAnimationFrame(scrollFrame.current);
-    programmatic.current = true;
-    const start = container.scrollTop;
     const groupCenter =
       (firstLine.offsetTop + lastLine.offsetTop + lastLine.offsetHeight) / 2;
     const target = Math.max(0, groupCenter - container.clientHeight / 2);
+    const start = container.scrollTop;
+    const distance = target - start;
 
-    if (settings.reduceMotion || Math.abs(target - start) < 1) {
+    if (settings.reduceMotion || Math.abs(distance) < 1) {
+      commitContentTransform();
       container.scrollTop = target;
-      scrollFrame.current = requestAnimationFrame(() => {
-        programmatic.current = false;
-      });
-      return () => cancelAnimationFrame(scrollFrame.current);
+      return;
     }
 
-    const distance = Math.abs(target - start);
-    const startedAt = performance.now();
-    const duration = Math.min(680, Math.max(520, distance * 0.32));
-    const step = (now: number) => {
-      const progress = Math.min(1, (now - startedAt) / duration);
-      const eased = 1 - Math.pow(1 - progress, 4);
-      container.scrollTop = start + (target - start) * eased;
-      if (progress < 1) {
-        scrollFrame.current = requestAnimationFrame(step);
-      } else {
-        programmatic.current = false;
+    const duration = Math.min(760, Math.max(460, Math.abs(distance) * 0.28));
+    let frame = 0;
+    content.style.transition = "none";
+    content.style.transform = "translate3d(0, 0, 0)";
+    content.style.willChange = "transform";
+
+    const finish = () => {
+      content.style.transition = "none";
+      content.style.transform = "";
+      content.style.willChange = "";
+      container.scrollTop = target;
+    };
+
+    const onTransitionEnd = (event: TransitionEvent) => {
+      if (event.target === content && event.propertyName === "transform") {
+        finish();
       }
     };
-    scrollFrame.current = requestAnimationFrame(step);
+
+    content.addEventListener("transitionend", onTransitionEnd);
+    frame = requestAnimationFrame(() => {
+      content.style.transition = `transform ${duration}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+      content.style.transform = `translate3d(0, ${-distance}px, 0)`;
+    });
 
     return () => {
-      cancelAnimationFrame(scrollFrame.current);
-      programmatic.current = false;
+      cancelAnimationFrame(frame);
+      content.removeEventListener("transitionend", onTransitionEnd);
+      commitContentTransform();
     };
   }, [
     activeScrollGroup,
@@ -113,10 +135,10 @@ export function LyricsPanel({
     settings.lyricsLineSpacing,
     settings.reduceMotion,
     track.id,
+    commitContentTransform,
   ]);
 
   const stopFollowing = useCallback(() => {
-    if (programmatic.current) return;
     setUserBrowsing(true);
     setFollowing(false);
   }, []);
@@ -124,23 +146,7 @@ export function LyricsPanel({
   const resumeFollowing = useCallback(() => {
     setFollowing(true);
     setUserBrowsing(false);
-    const container = scrollRef.current;
-    if (!container || !activeScrollGroup) return;
-    const firstLine = container.querySelector<HTMLElement>(
-      `[data-line-index="${activeScrollGroup.start}"]`,
-    );
-    if (!firstLine) return;
-    const lastLine =
-      container.querySelector<HTMLElement>(
-        `[data-line-index="${activeScrollGroup.end}"]`,
-      ) ?? firstLine;
-    const groupCenter =
-      (firstLine.offsetTop + lastLine.offsetTop + lastLine.offsetHeight) / 2;
-    container.scrollTo({
-      top: Math.max(0, groupCenter - container.clientHeight / 2),
-      behavior: settings.reduceMotion ? "auto" : "smooth",
-    });
-  }, [activeScrollGroup, settings.reduceMotion]);
+  }, []);
 
   if (!displayRecord || !displayRecord.lines.length) {
     return (
@@ -182,6 +188,7 @@ export function LyricsPanel({
         role="region"
       >
         <div
+          ref={contentRef}
           className={cn("mx-auto flex max-w-3xl flex-col", isOverlay ? "py-[38vh]" : "py-10")}
           style={{ gap: `${settings.lyricsLineSpacing * 0.5}rem` }}
         >

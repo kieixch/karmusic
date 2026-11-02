@@ -98,6 +98,7 @@ html.oled {
   .lyrics-scroll {
     scrollbar-width: none;
     overscroll-behavior: contain;
+    will-change: scroll-position;
   }
 
   .lyrics-scroll::-webkit-scrollbar {

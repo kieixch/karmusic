@@ -84,7 +84,7 @@ export function LyricsModeOverlay() {
           <img
             src={artworkUrl}
             alt=""
-            className="size-full scale-110 object-cover opacity-40 blur-3xl"
+            className="size-full scale-110 transform-gpu object-cover opacity-40 blur-3xl"
           />
         ) : (
           <div className="size-full bg-[radial-gradient(ellipse_at_top,rgba(200,255,77,0.10),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(120,90,255,0.10),transparent_55%)]" />
