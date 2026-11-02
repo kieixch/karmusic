@@ -9,7 +9,7 @@ import { useSettings } from "@/components/providers/SettingsProvider";
 import { LyricsEditorDialog } from "./LyricsEditorDialog";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { formatTime } from "@/lib/utils/format";
+import { clamp, formatTime } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 
 interface LyricsPanelProps {
@@ -20,7 +20,7 @@ interface LyricsPanelProps {
 }
 
 export function LyricsPanel({ track, variant = "embedded", className }: LyricsPanelProps) {
-  const { settings } = useSettings();
+  const { settings, updateSettings } = useSettings();
   const { currentTrack, seek, isPlaying } = usePlayer();
   const { currentTime } = usePlaybackClock();
   const [editorOpen, setEditorOpen] = useState(false);
@@ -211,6 +211,29 @@ export function LyricsPanel({ track, variant = "embedded", className }: LyricsPa
           <ScrollText className="size-3" aria-hidden />
           {displayRecord.format === "lrc" ? "Synced LRC" : "Plain lyrics"}
           {displayRecord.offsetMs ? ` · ${(displayRecord.offsetMs / 1000).toFixed(1)}s offset` : ""}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] px-1.5 py-0.5">
+          <button
+            type="button"
+            onClick={() =>
+              updateSettings({ lyricsFontSize: clamp(settings.lyricsFontSize - 2, 16, 72) })
+            }
+            aria-label="Decrease lyric font size"
+            className="focus-ring rounded px-1 leading-none hover:text-white/70"
+          >
+            A−
+          </button>
+          <span className="font-mono tabular-nums">{settings.lyricsFontSize}px</span>
+          <button
+            type="button"
+            onClick={() =>
+              updateSettings({ lyricsFontSize: clamp(settings.lyricsFontSize + 2, 16, 72) })
+            }
+            aria-label="Increase lyric font size"
+            className="focus-ring rounded px-1 leading-none hover:text-white/70"
+          >
+            A+
+          </button>
         </span>
         <button
           type="button"
