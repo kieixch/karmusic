@@ -72,11 +72,15 @@ export function LyricsPanel({
       return () => cancelAnimationFrame(scrollFrame.current);
     }
 
+    const distance = Math.abs(target - start);
     const startedAt = performance.now();
-    const duration = 480;
+    const duration = Math.min(760, Math.max(360, distance * 0.45));
     const step = (now: number) => {
       const progress = Math.min(1, (now - startedAt) / duration);
-      const eased = 1 - Math.pow(1 - progress, 3);
+      const eased =
+        progress < 0.5
+          ? 4 * progress * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
       container.scrollTop = start + (target - start) * eased;
       if (progress < 1) {
         scrollFrame.current = requestAnimationFrame(step);
@@ -90,7 +94,15 @@ export function LyricsPanel({
       cancelAnimationFrame(scrollFrame.current);
       programmatic.current = false;
     };
-  }, [displayActive, autoScroll, following, settings.reduceMotion, track.id]);
+  }, [
+    displayActive,
+    autoScroll,
+    following,
+    settings.lyricsFontSize,
+    settings.lyricsLineSpacing,
+    settings.reduceMotion,
+    track.id,
+  ]);
 
   const stopFollowing = useCallback(() => {
     if (programmatic.current) return;
@@ -133,6 +145,8 @@ export function LyricsPanel({
 
   const lines = displayRecord.lines;
   const beforeFirst = timed && displayActive < 0 && lines[0]?.time != null;
+  const activeFontSize = `clamp(${Math.round(settings.lyricsFontSize * 0.8)}px, ${settings.lyricsFontSize / 12}vw, ${settings.lyricsFontSize}px)`;
+  const baseLineHeight = Math.max(1.15, settings.lyricsLineSpacing * 0.72);
 
   return (
     <div className={cn("relative flex min-h-0 flex-1 flex-col", className)}>
@@ -168,18 +182,16 @@ export function LyricsPanel({
                   if (line.time != null) seek(Math.max(0, line.time + (displayRecord.offsetMs ?? 0) / 1000));
                 }}
                 className={cn(
-                  "focus-ring group relative rounded-lg px-2 text-left transition-[color,opacity,font-size,transform] duration-500 ease-out",
+                  "focus-ring group relative rounded-lg px-2 text-left transition-[color,opacity,text-shadow] duration-500 ease-out",
                   timed ? "cursor-pointer" : "cursor-default",
                   line.time == null && "py-1",
                   isActive ? "text-white" : isNear ? "text-white/45 hover:text-white/70" : "text-white/25 hover:text-white/50",
                   isOverlay ? "lyrics-text-shadow" : "",
                 )}
                 style={{
-                  fontSize: isActive
-                    ? `clamp(${Math.round(settings.lyricsFontSize * 0.8)}px, ${settings.lyricsFontSize / 12}vw, ${settings.lyricsFontSize}px)`
-                    : `clamp(${Math.round(settings.lyricsFontSize * 0.62)}px, ${(settings.lyricsFontSize * 0.075) / 1}vw, ${Math.round(settings.lyricsFontSize * 0.72)}px)`,
-                  lineHeight: settings.lyricsLineSpacing,
-                  fontWeight: isActive ? 700 : 500,
+                  fontSize: activeFontSize,
+                  lineHeight: baseLineHeight,
+                  fontWeight: 600,
                   opacity: isActive ? 1 : undefined,
                 }}
                 aria-current={isActive ? "true" : undefined}
@@ -187,12 +199,17 @@ export function LyricsPanel({
                 {isActive ? (
                   <span className="absolute -left-1 top-1/2 hidden h-[1.1em] w-0.5 -translate-y-1/2 rounded-full bg-accent sm:block" aria-hidden />
                 ) : null}
-                {line.text || "♪"}
-                {line.time != null && isOverlay ? (
-                  <span className="ml-2 align-middle font-mono text-[10px] font-normal text-white/20 opacity-0 transition group-hover:opacity-100">
-                    {formatTime(line.time + (displayRecord.offsetMs ?? 0) / 1000)}
-                  </span>
-                ) : null}
+                <span
+                  className="inline-block origin-left transition-transform duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+                  style={{ transform: `scale(${isActive ? 1 : 0.75})` }}
+                >
+                  {line.text || "♪"}
+                  {line.time != null && isOverlay ? (
+                    <span className="ml-2 align-middle font-mono text-[10px] font-normal text-white/20 opacity-0 transition group-hover:opacity-100">
+                      {formatTime(line.time + (displayRecord.offsetMs ?? 0) / 1000)}
+                    </span>
+                  ) : null}
+                </span>
               </button>
             );
           })}

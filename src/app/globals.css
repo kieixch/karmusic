@@ -110,23 +110,17 @@ html.oled {
 }
 
 .page-enter {
-  animation: page-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: page-enter 540ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes page-enter {
   0% {
-    opacity: 0;
-    filter: brightness(1.7);
-    transform: translateY(4px);
-  }
-  45% {
-    opacity: 0.6;
-    filter: brightness(1.15);
+    opacity: 0.4;
+    transform: translate3d(0, 10px, 0);
   }
   100% {
     opacity: 1;
-    filter: brightness(1);
-    transform: none;
+    transform: translate3d(0, 0, 0);
   }
 }
 
