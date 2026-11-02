@@ -88,13 +88,10 @@ export function LyricsPanel({
 
     const distance = Math.abs(target - start);
     const startedAt = performance.now();
-    const duration = Math.min(820, Math.max(420, distance * 0.4));
+    const duration = Math.min(680, Math.max(520, distance * 0.32));
     const step = (now: number) => {
       const progress = Math.min(1, (now - startedAt) / duration);
-      const eased =
-        progress < 0.5
-          ? 4 * progress * progress * progress
-          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      const eased = 1 - Math.pow(1 - progress, 4);
       container.scrollTop = start + (target - start) * eased;
       if (progress < 1) {
         scrollFrame.current = requestAnimationFrame(step);
