@@ -31,7 +31,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       ) : null}
       <Sidebar />
       <div className="lg:pl-[260px]">
-        <MobileHeader />
+        <MobileHeader
+          overAmbient={isImmersive && settings.ambientMode && Boolean(currentTrack)}
+        />
         <StorageBanner />
         <main
           id="main"
