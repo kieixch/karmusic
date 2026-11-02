@@ -10,10 +10,10 @@ export function Logo({ href = "/", compact = false }: { href?: string; compact?:
     >
       <span className="relative flex size-9 items-center justify-center overflow-hidden rounded-xl shadow-glow">
         <img
-          src="/icons/icon-29.jpeg"
+          src="/icons/icon-2911.jpeg"
           alt=""
-          width={400}
-          height={400}
+          width={1254}
+          height={1254}
           className="size-full object-cover"
         />
       </span>

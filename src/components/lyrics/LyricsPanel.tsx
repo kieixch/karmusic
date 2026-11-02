@@ -16,10 +16,16 @@ interface LyricsPanelProps {
   track: Track;
   variant?: "overlay" | "embedded";
   className?: string;
+  hideMeta?: boolean;
   onRequestCloseEditor?: () => void;
 }
 
-export function LyricsPanel({ track, variant = "embedded", className }: LyricsPanelProps) {
+export function LyricsPanel({
+  track,
+  variant = "embedded",
+  className,
+  hideMeta = false,
+}: LyricsPanelProps) {
   const { settings, updateSettings } = useSettings();
   const { currentTrack, seek, isPlaying } = usePlayer();
   const { currentTime } = usePlaybackClock();
@@ -27,6 +33,7 @@ export function LyricsPanel({ track, variant = "embedded", className }: LyricsPa
   const [following, setFollowing] = useState(true);
   const [userBrowsing, setUserBrowsing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollFrame = useRef(0);
   const programmatic = useRef(false);
   const doesMatchCurrent = currentTrack?.id === track.id;
   const time = doesMatchCurrent ? currentTime : 0;
@@ -48,13 +55,41 @@ export function LyricsPanel({ track, variant = "embedded", className }: LyricsPa
     if (!container) return;
     const line = container.querySelector<HTMLElement>(`[data-line-index="${displayActive}"]`);
     if (!line) return;
-    const target = line.offsetTop - container.clientHeight / 2 + line.clientHeight / 2;
+
+    cancelAnimationFrame(scrollFrame.current);
     programmatic.current = true;
-    container.scrollTo({ top: Math.max(0, target), behavior: settings.reduceMotion ? "auto" : "smooth" });
-    const timer = window.setTimeout(() => {
+    const start = container.scrollTop;
+    const target = Math.max(
+      0,
+      line.offsetTop - container.clientHeight / 2 + line.clientHeight / 2,
+    );
+
+    if (settings.reduceMotion || Math.abs(target - start) < 1) {
+      container.scrollTop = target;
+      scrollFrame.current = requestAnimationFrame(() => {
+        programmatic.current = false;
+      });
+      return () => cancelAnimationFrame(scrollFrame.current);
+    }
+
+    const startedAt = performance.now();
+    const duration = 480;
+    const step = (now: number) => {
+      const progress = Math.min(1, (now - startedAt) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      container.scrollTop = start + (target - start) * eased;
+      if (progress < 1) {
+        scrollFrame.current = requestAnimationFrame(step);
+      } else {
+        programmatic.current = false;
+      }
+    };
+    scrollFrame.current = requestAnimationFrame(step);
+
+    return () => {
+      cancelAnimationFrame(scrollFrame.current);
       programmatic.current = false;
-    }, 550);
-    return () => window.clearTimeout(timer);
+    };
   }, [displayActive, autoScroll, following, settings.reduceMotion, track.id]);
 
   const stopFollowing = useCallback(() => {
@@ -133,7 +168,7 @@ export function LyricsPanel({ track, variant = "embedded", className }: LyricsPa
                   if (line.time != null) seek(Math.max(0, line.time + (displayRecord.offsetMs ?? 0) / 1000));
                 }}
                 className={cn(
-                  "focus-ring group relative rounded-lg px-2 text-left transition-all duration-300",
+                  "focus-ring group relative rounded-lg px-2 text-left transition-[color,opacity,font-size,transform] duration-500 ease-out",
                   timed ? "cursor-pointer" : "cursor-default",
                   line.time == null && "py-1",
                   isActive ? "text-white" : isNear ? "text-white/45 hover:text-white/70" : "text-white/25 hover:text-white/50",
@@ -206,7 +241,8 @@ export function LyricsPanel({ track, variant = "embedded", className }: LyricsPa
         </p>
       ) : null}
 
-      <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-[11px] text-white/30">
+      {!hideMeta ? (
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-[11px] text-white/30">
         <span className="inline-flex items-center gap-1">
           <ScrollText className="size-3" aria-hidden />
           {displayRecord.format === "lrc" ? "Synced LRC" : "Plain lyrics"}
@@ -249,7 +285,8 @@ export function LyricsPanel({ track, variant = "embedded", className }: LyricsPa
         >
           Replace
         </button>
-      </div>
+        </div>
+      ) : null}
 
       <LyricsEditorDialog track={track} open={editorOpen} onClose={() => setEditorOpen(false)} />
     </div>

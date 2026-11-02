@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ChevronDown,
+  Eye,
+  EyeOff,
   Maximize2,
   Minimize2,
   RotateCcw,
@@ -42,10 +44,14 @@ export function LyricsModeOverlay() {
   const { getLyrics, setLyricsOffset } = useLibrary();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [hintDismissed, setHintDismissed] = useState(false);
+  const [chromeHidden, setChromeHidden] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setChromeHidden(false);
+      return;
+    }
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeLyricsMode();
     };
@@ -86,42 +92,51 @@ export function LyricsModeOverlay() {
         <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${0.45 + dim * 0.5})` }} />
       </div>
 
-      <header className="safe-top relative z-20 flex shrink-0 items-center gap-2 px-2 py-2 sm:px-4">
-        <IconButton ref={closeRef} label="Exit Lyrics Mode" size="md" onClick={closeLyricsMode}>
-          <ChevronDown aria-hidden />
-        </IconButton>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-white">
-            {currentTrack?.title ?? "Lyrics Mode"}
-          </p>
-          <p className="truncate text-xs text-white/50">
-            {currentTrack?.artist ?? "Play a track to see lyrics"}
-            {record?.format === "lrc" ? " · synced" : ""}
-          </p>
-        </div>
-        {currentTrack && !isPortrait ? (
-          <Badge tone={currentTrack.source === "local" ? "local" : "online"} className="hidden sm:inline-flex">
-            {currentTrack.source === "local" ? "Local" : currentTrack.provider === "freetouse" ? "Free To Use" : "Jamendo"}
-          </Badge>
-        ) : null}
-        <IconButton
-          label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          size="md"
-          onClick={toggleFullscreen}
-          active={isFullscreen}
-        >
-          {isFullscreen ? <Minimize2 aria-hidden /> : <Maximize2 aria-hidden />}
-        </IconButton>
-        <IconButton
-          label="Lyrics display settings"
-          size="md"
-          onClick={() => setSettingsOpen(true)}
-        >
-          <SlidersHorizontal aria-hidden />
-        </IconButton>
-      </header>
+      {!chromeHidden ? (
+        <header className="safe-top relative z-20 flex shrink-0 items-center gap-2 px-2 py-2 sm:px-4">
+          <IconButton ref={closeRef} label="Exit Lyrics Mode" size="md" onClick={closeLyricsMode}>
+            <ChevronDown aria-hidden />
+          </IconButton>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-white">
+              {currentTrack?.title ?? "Lyrics Mode"}
+            </p>
+            <p className="truncate text-xs text-white/50">
+              {currentTrack?.artist ?? "Play a track to see lyrics"}
+              {record?.format === "lrc" ? " · synced" : ""}
+            </p>
+          </div>
+          {currentTrack && !isPortrait ? (
+            <Badge tone={currentTrack.source === "local" ? "local" : "online"} className="hidden sm:inline-flex">
+              {currentTrack.source === "local" ? "Local" : currentTrack.provider === "freetouse" ? "Free To Use" : "Jamendo"}
+            </Badge>
+          ) : null}
+          <IconButton
+            label="Hide lyrics controls"
+            size="md"
+            onClick={() => setChromeHidden(true)}
+          >
+            <EyeOff aria-hidden />
+          </IconButton>
+          <IconButton
+            label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            size="md"
+            onClick={toggleFullscreen}
+            active={isFullscreen}
+          >
+            {isFullscreen ? <Minimize2 aria-hidden /> : <Maximize2 aria-hidden />}
+          </IconButton>
+          <IconButton
+            label="Lyrics display settings"
+            size="md"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <SlidersHorizontal aria-hidden />
+          </IconButton>
+        </header>
+      ) : null}
 
-      {isPortrait && !minimal && !hintDismissed ? (
+      {!chromeHidden && isPortrait && !minimal && !hintDismissed ? (
         <div className="relative z-20 mx-3 mb-1 flex items-center gap-2 rounded-xl border border-accent/20 bg-accent/[0.08] px-3 py-2 text-xs text-accent-soft sm:mx-4">
           <RotateCcw className="size-4 shrink-0 animate-[spin_5s_linear_infinite]" aria-hidden />
           <span className="flex-1">
@@ -139,7 +154,7 @@ export function LyricsModeOverlay() {
         </div>
       ) : null}
 
-      {orientationNote && !orientationLocked && !isPortrait ? (
+      {!chromeHidden && orientationNote && !orientationLocked && !isPortrait ? (
         <p className="relative z-20 px-4 pb-1 text-center text-[11px] text-white/35">{orientationNote}</p>
       ) : null}
 
@@ -151,7 +166,7 @@ export function LyricsModeOverlay() {
       >
         {currentTrack ? (
           <>
-            {!minimal && landscape ? (
+            {!chromeHidden && !minimal && landscape ? (
               <aside className="hidden w-[clamp(110px,19vw,250px)] shrink-0 flex-col items-center justify-center sm:flex">
                 <AlbumArt
                   id={currentTrack.id}
@@ -189,7 +204,7 @@ export function LyricsModeOverlay() {
               </aside>
             ) : null}
             <div className={cn("flex min-h-0 flex-1 flex-col", !landscape && "justify-center")}>
-              <LyricsPanel track={currentTrack} variant="overlay" />
+              <LyricsPanel track={currentTrack} variant="overlay" hideMeta={chromeHidden} />
               {!record ? null : null}
             </div>
           </>
@@ -207,32 +222,45 @@ export function LyricsModeOverlay() {
         )}
       </div>
 
-      <footer className="safe-bottom relative z-20 shrink-0 border-t border-white/[0.06] bg-black/30 px-3 pb-2 pt-2 backdrop-blur-md sm:px-6">
-        <div className="mx-auto flex max-w-4xl flex-col gap-1.5">
-          <SeekBar compact={isPortrait} showTimes={!isPortrait} />
-          <div className="flex items-center justify-between gap-2">
-            <div className="hidden w-28 sm:block">
-              {!minimal ? <VolumeControl /> : null}
+      {chromeHidden ? (
+        <IconButton
+          label="Show lyrics controls"
+          size="sm"
+          onClick={() => setChromeHidden(false)}
+          className="absolute right-3 top-3 z-30 border border-white/10 bg-black/50 text-white/50 opacity-50 backdrop-blur transition hover:bg-black/75 hover:text-white hover:opacity-100 focus-visible:opacity-100"
+        >
+          <Eye aria-hidden />
+        </IconButton>
+      ) : null}
+
+      {!chromeHidden ? (
+        <footer className="safe-bottom relative z-20 shrink-0 border-t border-white/[0.06] bg-black/30 px-3 pb-2 pt-2 backdrop-blur-md sm:px-6">
+          <div className="mx-auto flex max-w-4xl flex-col gap-1.5">
+            <SeekBar compact={isPortrait} showTimes={!isPortrait} />
+            <div className="flex items-center justify-between gap-2">
+              <div className="hidden w-28 sm:block">
+                {!minimal ? <VolumeControl /> : null}
+              </div>
+              <PlaybackControls compact={minimal || isPortrait} />
+              <div className="hidden w-28 justify-end text-right sm:flex">
+                <button
+                  type="button"
+                  onClick={() => setSettingsOpen(true)}
+                  className="focus-ring inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[11px] text-white/35 transition hover:text-white/70"
+                >
+                  <Settings2 className="size-3.5" aria-hidden />
+                  Display
+                </button>
+              </div>
             </div>
-            <PlaybackControls compact={minimal || isPortrait} />
-            <div className="hidden w-28 justify-end text-right sm:flex">
-              <button
-                type="button"
-                onClick={() => setSettingsOpen(true)}
-                className="focus-ring inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[11px] text-white/35 transition hover:text-white/70"
-              >
-                <Settings2 className="size-3.5" aria-hidden />
-                Display
-              </button>
-            </div>
+            {isPlaying && duration > 0 ? (
+              <p className="text-center text-[10px] tabular-nums text-white/25">
+                {Math.round((duration || 0) / 60)} min track
+              </p>
+            ) : null}
           </div>
-          {isPlaying && duration > 0 ? (
-            <p className="text-center text-[10px] tabular-nums text-white/25">
-              {Math.round((duration || 0) / 60)} min track
-            </p>
-          ) : null}
-        </div>
-      </footer>
+        </footer>
+      ) : null}
 
       <Dialog
         open={settingsOpen}

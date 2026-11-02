@@ -27,8 +27,8 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
   },
   icons: {
-    icon: [{ url: "/icons/icon-29.jpeg", type: "image/jpeg", sizes: "400x400" }],
-    apple: [{ url: "/icons/icon-29.jpeg", type: "image/jpeg", sizes: "400x400" }],
+    icon: [{ url: "/icons/icon-2911.jpeg", type: "image/jpeg", sizes: "1254x1254" }],
+    apple: [{ url: "/icons/icon-2911.jpeg", type: "image/jpeg", sizes: "1254x1254" }],
   },
   openGraph: {
     title: "KarMusic",

@@ -10,6 +10,7 @@ import { ImportProgress } from "./ImportProgress";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { ServiceWorkerRegister } from "./ServiceWorkerRegister";
 import { NavigationRecovery } from "./NavigationRecovery";
+import { IntroSplash } from "./IntroSplash";
 import { MiniPlayer } from "@/components/player/MiniPlayer";
 import { LyricsModeOverlay } from "@/components/lyrics/LyricsModeOverlay";
 import { cn } from "@/lib/utils/cn";
@@ -31,7 +32,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             isImmersive && "pb-44 lg:pb-36",
           )}
         >
-          {children}
+          <div key={pathname} className="page-enter">
+            {children}
+          </div>
         </main>
       </div>
       <MobileNav />
@@ -41,6 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <NavigationRecovery />
       <KeyboardShortcuts />
       <ServiceWorkerRegister />
+      <IntroSplash />
     </div>
   );
 }

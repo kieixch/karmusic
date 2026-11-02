@@ -1,11 +1,11 @@
 /* KarMusic service worker: offline app shell only.
  * Audio streams and provider API responses are never cached here.
  */
-const CACHE_VERSION = "karmusic-shell-v3";
+const CACHE_VERSION = "karmusic-shell-v4";
 const SHELL_ASSETS = [
   "/",
   "/manifest.webmanifest",
-  "/icons/icon-29.jpeg",
+  "/icons/icon-2911.jpeg",
 ];
 
 self.addEventListener("install", (event) => {
