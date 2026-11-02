@@ -63,12 +63,12 @@ export function LyricsPanel({
     if (!container || !content) return;
     const transform = getComputedStyle(content).transform;
     const offset = transform && transform !== "none" ? new DOMMatrixReadOnly(transform).m42 : 0;
-    content.style.transition = "none";
-    content.style.transform = "";
-    content.style.willChange = "";
     if (Math.abs(offset) >= 0.5) {
       container.scrollTop = Math.max(0, container.scrollTop - offset);
     }
+    content.style.transition = "none";
+    content.style.transform = "";
+    content.style.willChange = "";
   }, []);
 
   useEffect(() => {
@@ -87,7 +87,11 @@ export function LyricsPanel({
 
     const groupCenter =
       (firstLine.offsetTop + lastLine.offsetTop + lastLine.offsetHeight) / 2;
-    const target = Math.max(0, groupCenter - container.clientHeight / 2);
+    const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+    const target = Math.min(
+      maxScroll,
+      Math.max(0, groupCenter - container.clientHeight / 2),
+    );
     const start = container.scrollTop;
     const distance = target - start;
 
@@ -97,17 +101,20 @@ export function LyricsPanel({
       return;
     }
 
-    const duration = Math.min(760, Math.max(460, Math.abs(distance) * 0.28));
+    const duration = Math.min(1000, Math.max(560, 450 + Math.abs(distance) * 0.75));
     let frame = 0;
+    let finished = false;
     content.style.transition = "none";
-    content.style.transform = "translate3d(0, 0, 0)";
+    content.style.transform = `translate3d(0, ${distance}px, 0)`;
     content.style.willChange = "transform";
+    container.scrollTop = target;
 
     const finish = () => {
+      if (finished) return;
+      finished = true;
       content.style.transition = "none";
       content.style.transform = "";
       content.style.willChange = "";
-      container.scrollTop = target;
     };
 
     const onTransitionEnd = (event: TransitionEvent) => {
@@ -118,14 +125,19 @@ export function LyricsPanel({
 
     content.addEventListener("transitionend", onTransitionEnd);
     frame = requestAnimationFrame(() => {
-      content.style.transition = `transform ${duration}ms cubic-bezier(0.22, 1, 0.36, 1)`;
-      content.style.transform = `translate3d(0, ${-distance}px, 0)`;
+      content.style.transition = `transform ${duration}ms cubic-bezier(0.65, 0, 0.35, 1)`;
+      content.style.transform = "translate3d(0, 0, 0)";
     });
 
     return () => {
       cancelAnimationFrame(frame);
       content.removeEventListener("transitionend", onTransitionEnd);
-      commitContentTransform();
+      if (finished) {
+        content.style.transform = "";
+        content.style.willChange = "";
+      } else {
+        commitContentTransform();
+      }
     };
   }, [
     activeScrollGroup,
