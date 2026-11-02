@@ -110,7 +110,7 @@ test("streams a mocked online track and searches both sources", async ({ page })
   await expect(page.getByText("Test Artist").first()).toBeVisible();
 
   await page.goto("/search");
-  await page.getByLabel("Search music").fill("Mock");
+  await page.getByRole("searchbox", { name: "Search music" }).fill("Mock");
   await expect(page.getByRole("heading", { name: "Online results" })).toBeVisible();
   await expect(page.getByText("Mock Signal").first()).toBeVisible();
 });
