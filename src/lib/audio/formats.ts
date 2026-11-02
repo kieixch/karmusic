@@ -59,26 +59,25 @@ function bytesToBase64(bytes: Uint8Array): string {
 
 export function readAudioDuration(src: string): Promise<number | undefined> {
   return new Promise((resolve) => {
-    const audio = new Audio();
+    const audio = document.createElement("audio");
     let settled = false;
     const finish = (duration?: number) => {
       if (settled) return;
       settled = true;
+      clearTimeout(timer);
       audio.removeAttribute("src");
       audio.load();
       resolve(duration);
     };
     const timer = setTimeout(() => finish(undefined), 12_000);
+    const readDuration = () => {
+      if (Number.isFinite(audio.duration) && audio.duration > 0) finish(audio.duration);
+    };
     audio.preload = "metadata";
-    audio.onloadedmetadata = () => {
-      clearTimeout(timer);
-      const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : undefined;
-      finish(duration);
-    };
-    audio.onerror = () => {
-      clearTimeout(timer);
-      finish(undefined);
-    };
+    audio.addEventListener("loadedmetadata", readDuration);
+    audio.addEventListener("durationchange", readDuration);
+    audio.addEventListener("canplay", readDuration);
+    audio.onerror = () => finish(undefined);
     audio.src = src;
   });
 }

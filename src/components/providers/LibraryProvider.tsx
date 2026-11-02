@@ -89,6 +89,7 @@ interface LibraryContextValue {
   isFavorite: (trackId: string) => boolean;
   addRecent: (track: Track) => void;
   saveTrack: (track: Track) => Promise<void>;
+  syncLocalTrackDuration: (trackId: string, duration: number) => Track | undefined;
   getTrack: (trackId: string) => Track | undefined;
   resolveLocalSource: (track: Track) => Promise<string>;
   createPlaylist: (name: string) => Promise<Playlist | null>;
@@ -250,6 +251,27 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
       }
     },
     [reportStorageError, setTracksSafe],
+  );
+
+  const syncLocalTrackDuration = useCallback(
+    (trackId: string, duration: number) => {
+      if (!Number.isFinite(duration) || duration <= 0) return undefined;
+      const target = tracksRef.current.find(
+        (track) => track.id === trackId && track.source === "local",
+      );
+      if (!target) return undefined;
+      if (target.duration != null && Math.abs(target.duration - duration) < 0.25) {
+        return undefined;
+      }
+      const updated: Track = { ...target, duration };
+      setTracksSafe(tracksRef.current.map((track) => (track.id === trackId ? updated : track)));
+      setRecentSafe(
+        recentRef.current.map((track) => (track.id === trackId ? { ...track, duration } : track)),
+      );
+      void putTrack(updated).catch((error) => reportStorageError(error));
+      return updated;
+    },
+    [reportStorageError, setRecentSafe, setTracksSafe],
   );
 
   const importFiles = useCallback(
@@ -724,6 +746,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
       isFavorite,
       addRecent,
       saveTrack,
+      syncLocalTrackDuration,
       getTrack,
       resolveLocalSource,
       createPlaylist,
@@ -772,6 +795,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
       resolveLocalSource,
       saveLyrics,
       saveTrack,
+      syncLocalTrackDuration,
       setLyricsOffset,
       storageAvailable,
       storageError,

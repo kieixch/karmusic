@@ -35,18 +35,22 @@ export async function buildLocalTrack(file: File): Promise<BuiltLocalTrack> {
     throw new Error("File is larger than the 300 MB import limit.");
   }
 
-  const metadata = await readMetadata(file);
+  const objectUrl = URL.createObjectURL(file);
+  const [metadata, mediaDuration] = await Promise.all([
+    readMetadata(file),
+    readAudioDuration(objectUrl),
+  ]);
+  URL.revokeObjectURL(objectUrl);
+
   const common = metadata?.common;
-  let duration =
+  const metadataDuration =
     metadata?.format?.duration && Number.isFinite(metadata.format.duration)
       ? metadata.format.duration
       : undefined;
-
-  if (!duration) {
-    const url = URL.createObjectURL(file);
-    duration = await readAudioDuration(url);
-    URL.revokeObjectURL(url);
-  }
+  // The browser's decoded duration is authoritative because it is the same
+  // value the player and lyric clock use. Container metadata can be inaccurate
+  // for VBR files or files with a missing/broken duration header.
+  const duration = mediaDuration ?? metadataDuration;
 
   const artwork = await artworkToDataUrl(common?.picture?.[0]);
   const title =

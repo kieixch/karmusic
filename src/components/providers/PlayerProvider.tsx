@@ -197,7 +197,7 @@ function PlaybackClock({
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const { settings, hydrated, updateSettings } = useSettings();
-  const { resolveLocalSource, addRecent } = useLibrary();
+  const { resolveLocalSource, addRecent, syncLocalTrackDuration } = useLibrary();
   const { toast } = useToast();
 
   const [engine] = useState<AudioEngine | null>(() =>
@@ -225,6 +225,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const shuffleRef = useRef(prefs.shuffle);
   const volumeRef = useRef(prefs.volume);
   const mutedRef = useRef(prefs.muted);
+  const lastAudibleVolumeRef = useRef(prefs.volume > 0 ? prefs.volume : DEFAULT_PREFS.volume);
   const loadTokenRef = useRef(0);
   const retriedRef = useRef(new Set<string>());
   const settingsHydratedRef = useRef(false);
@@ -550,7 +551,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       engine.on("pause", () => setIsPlaying(false)),
       engine.on("waiting", () => setIsBuffering(true)),
       engine.on("canplay", () => setIsBuffering(false)),
-      engine.on("loadedmetadata", () => setIsLoading(false)),
+      engine.on("loadedmetadata", (audio) => {
+        setIsLoading(false);
+        const track = trackRef.current;
+        if (track?.source !== "local" || !Number.isFinite(audio.duration)) return;
+        const updated = syncLocalTrackDuration(track.id, audio.duration);
+        if (!updated) return;
+        setCurrent(updated);
+        setQueue(queueRef.current.map((item) => (item.id === updated.id ? updated : item)));
+      }),
       engine.on("ended", () => handleEnded()),
       engine.on("error", () => {
         void handlePlaybackError(trackRef.current, loadTokenRef.current);
@@ -559,7 +568,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     return () => {
       for (const unsubscribe of unsubs) unsubscribe();
     };
-  }, [engine, handleEnded, handlePlaybackError]);
+  }, [
+    engine,
+    handleEnded,
+    handlePlaybackError,
+    setCurrent,
+    setQueue,
+    syncLocalTrackDuration,
+  ]);
 
   useEffect(() => {
     if (!engine) return;
@@ -647,7 +663,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     (nextVolume: number) => {
       const clamped = clamp(nextVolume, 0, 1);
       setVolumeSafe(clamped);
-      const nextMuted = clamped > 0 ? false : mutedRef.current;
+      if (clamped > 0) {
+        lastAudibleVolumeRef.current = clamped;
+      }
+      const nextMuted = clamped <= 0;
       setMuted(nextMuted);
       engine?.setVolume(clamped, nextMuted);
       updateSettings({ defaultVolume: clamped });
@@ -656,10 +675,20 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   );
 
   const toggleMute = useCallback(() => {
-    const nextMuted = !mutedRef.current;
-    setMuted(nextMuted);
-    engine?.setVolume(volumeRef.current, nextMuted);
-  }, [engine, setMuted]);
+    if (mutedRef.current || volumeRef.current <= 0) {
+      const restore =
+        lastAudibleVolumeRef.current > 0 ? lastAudibleVolumeRef.current : DEFAULT_PREFS.volume;
+      setVolumeSafe(restore);
+      setMuted(false);
+      engine?.setVolume(restore, false);
+      updateSettings({ defaultVolume: restore });
+      return;
+    }
+    lastAudibleVolumeRef.current = volumeRef.current;
+    setMuted(true);
+    engine?.setVolume(volumeRef.current, true);
+    updateSettings({ defaultVolume: volumeRef.current });
+  }, [engine, setMuted, setVolumeSafe, updateSettings]);
 
   const setRepeatMode = useCallback(
     (mode: RepeatMode) => {

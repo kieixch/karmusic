@@ -310,7 +310,7 @@ export function LyricsModeOverlay() {
             >
               <span
                 className={cn(
-                  "absolute top-0.5 size-5 rounded-full bg-white transition-transform",
+                  "pointer-events-none absolute left-0 top-0.5 size-5 rounded-full bg-white transition-transform",
                   settings.lyricsAutoScroll ? "translate-x-[22px]" : "translate-x-0.5",
                 )}
               />

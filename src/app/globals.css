@@ -140,4 +140,21 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #08090a;
+  border-radius: 9999px;
+  background: #c8ff4d;
+  box-shadow: 0 0 0 1px rgba(200, 255, 77, 0.35);
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #08090a;
+  border-radius: 9999px;
+  background: #c8ff4d;
+  box-shadow: 0 0 0 1px rgba(200, 255, 77, 0.35);
+  cursor: pointer;
 }
