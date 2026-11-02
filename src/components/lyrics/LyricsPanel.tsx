@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronUp, FileMusic, Plus, ScrollText } from "lucide-react";
 import type { Track } from "@/types/track";
 import { usePlayer, usePlaybackClock } from "@/components/providers/PlayerProvider";
@@ -10,6 +10,7 @@ import { LyricsEditorDialog } from "./LyricsEditorDialog";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { clamp, formatTime } from "@/lib/utils/format";
+import { groupLyricLinesForScroll } from "@/lib/lyrics/scrollGroups";
 import { cn } from "@/lib/utils/cn";
 
 interface LyricsPanelProps {
@@ -43,6 +44,14 @@ export function LyricsPanel({
   const timed = lyrics.timed;
   const autoScroll = settings.lyricsAutoScroll && !settings.reduceMotion;
   const isOverlay = variant === "overlay";
+  const lines = useMemo(() => displayRecord?.lines ?? [], [displayRecord]);
+  const scrollGroups = useMemo(() => groupLyricLinesForScroll(lines), [lines]);
+  const activeScrollGroup =
+    displayActive >= 0
+      ? scrollGroups.find(
+          (group) => displayActive >= group.start && displayActive <= group.end,
+        )
+      : undefined;
 
   useEffect(() => {
     setFollowing(true);
@@ -50,19 +59,24 @@ export function LyricsPanel({
   }, [track.id]);
 
   useEffect(() => {
-    if (!autoScroll || !following || displayActive < 0) return;
+    if (!autoScroll || !following || !activeScrollGroup) return;
     const container = scrollRef.current;
     if (!container) return;
-    const line = container.querySelector<HTMLElement>(`[data-line-index="${displayActive}"]`);
-    if (!line) return;
+    const firstLine = container.querySelector<HTMLElement>(
+      `[data-line-index="${activeScrollGroup.start}"]`,
+    );
+    if (!firstLine) return;
+    const lastLine =
+      container.querySelector<HTMLElement>(
+        `[data-line-index="${activeScrollGroup.end}"]`,
+      ) ?? firstLine;
 
     cancelAnimationFrame(scrollFrame.current);
     programmatic.current = true;
     const start = container.scrollTop;
-    const target = Math.max(
-      0,
-      line.offsetTop - container.clientHeight / 2 + line.clientHeight / 2,
-    );
+    const groupCenter =
+      (firstLine.offsetTop + lastLine.offsetTop + lastLine.offsetHeight) / 2;
+    const target = Math.max(0, groupCenter - container.clientHeight / 2);
 
     if (settings.reduceMotion || Math.abs(target - start) < 1) {
       container.scrollTop = target;
@@ -74,7 +88,7 @@ export function LyricsPanel({
 
     const distance = Math.abs(target - start);
     const startedAt = performance.now();
-    const duration = Math.min(760, Math.max(360, distance * 0.45));
+    const duration = Math.min(820, Math.max(420, distance * 0.4));
     const step = (now: number) => {
       const progress = Math.min(1, (now - startedAt) / duration);
       const eased =
@@ -95,7 +109,7 @@ export function LyricsPanel({
       programmatic.current = false;
     };
   }, [
-    displayActive,
+    activeScrollGroup,
     autoScroll,
     following,
     settings.lyricsFontSize,
@@ -114,14 +128,22 @@ export function LyricsPanel({
     setFollowing(true);
     setUserBrowsing(false);
     const container = scrollRef.current;
-    if (!container || displayActive < 0) return;
-    const line = container.querySelector<HTMLElement>(`[data-line-index="${displayActive}"]`);
-    if (!line) return;
+    if (!container || !activeScrollGroup) return;
+    const firstLine = container.querySelector<HTMLElement>(
+      `[data-line-index="${activeScrollGroup.start}"]`,
+    );
+    if (!firstLine) return;
+    const lastLine =
+      container.querySelector<HTMLElement>(
+        `[data-line-index="${activeScrollGroup.end}"]`,
+      ) ?? firstLine;
+    const groupCenter =
+      (firstLine.offsetTop + lastLine.offsetTop + lastLine.offsetHeight) / 2;
     container.scrollTo({
-      top: Math.max(0, line.offsetTop - container.clientHeight / 2 + line.clientHeight / 2),
+      top: Math.max(0, groupCenter - container.clientHeight / 2),
       behavior: settings.reduceMotion ? "auto" : "smooth",
     });
-  }, [displayActive, settings.reduceMotion]);
+  }, [activeScrollGroup, settings.reduceMotion]);
 
   if (!displayRecord || !displayRecord.lines.length) {
     return (
@@ -143,7 +165,6 @@ export function LyricsPanel({
     );
   }
 
-  const lines = displayRecord.lines;
   const beforeFirst = timed && displayActive < 0 && lines[0]?.time != null;
   const activeFontSize = `clamp(${Math.round(settings.lyricsFontSize * 0.8)}px, ${settings.lyricsFontSize / 12}vw, ${settings.lyricsFontSize}px)`;
   const baseLineHeight = Math.max(1.15, settings.lyricsLineSpacing * 0.72);
