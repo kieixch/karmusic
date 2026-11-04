@@ -34,7 +34,7 @@ export default function NowPlayingPage() {
   } = usePlayer();
   const { isFavorite, toggleFavorite } = useLibrary();
   const { settings, updateSettings } = useSettings();
-  const { openLyricsMode } = useLyricsMode();
+  const { openLyricsMode, open: lyricsModeOpen } = useLyricsMode();
 
   if (!currentTrack) {
     return (
@@ -199,7 +199,7 @@ export default function NowPlayingPage() {
         </section>
 
         <section aria-label="Lyrics" className="flex min-h-[420px] flex-col lg:min-h-0">
-          <LyricsPanel track={currentTrack} className="h-full" />
+          <LyricsPanel track={currentTrack} className="h-full" active={!lyricsModeOpen} />
         </section>
       </div>
 

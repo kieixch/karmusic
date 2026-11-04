@@ -18,6 +18,7 @@ interface LyricsPanelProps {
   variant?: "overlay" | "embedded";
   className?: string;
   hideMeta?: boolean;
+  active?: boolean;
   onRequestCloseEditor?: () => void;
 }
 
@@ -26,6 +27,7 @@ export function LyricsPanel({
   variant = "embedded",
   className,
   hideMeta = false,
+  active = true,
 }: LyricsPanelProps) {
   const { settings, updateSettings } = useSettings();
   const { currentTrack, seek, isPlaying } = usePlayer();
@@ -72,7 +74,7 @@ export function LyricsPanel({
   }, []);
 
   useEffect(() => {
-    if (!autoScroll || !following || !activeScrollGroup) return;
+    if (!active || !autoScroll || !following || !activeScrollGroup) return;
     const container = scrollRef.current;
     const content = contentRef.current;
     if (!container || !content) return;
@@ -140,6 +142,7 @@ export function LyricsPanel({
       }
     };
   }, [
+    active,
     activeScrollGroup,
     autoScroll,
     following,
